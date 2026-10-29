@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Look up which federal, state, and AI-specific rules protect health data in every U.S. state, based on who holds the data. By TechInHSR.">
-<style>[hidden]{display:none!important}</style>
 <title>Health Privacy Navigator</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,6 +33,7 @@
   --yes:#5cc8b6; --yes-bg:#163a33; --dep:#e6c35f; --dep-bg:#3a3118; --no:#93a4a0; --no-bg:#1d2b28; --soon:#c9a3e6; --soon-bg:#2f2238;
   color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;margin:0}
 .wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 a{color:var(--teal)}
@@ -868,7 +868,7 @@ function renderCmp(){
       <td>${p?esc(p.law)+'<br><span class="note">'+esc(effLabel(p.eff))+'</span>':'None'}</td>
       <td>${p?(p.sens==='opt-in'?'Opt-in':'Opt-out or right to limit'):'n/a'}</td>
       <td>${p?HX[p.hx]:'n/a'}</td><td>${esc(hs)}</td><td class="num">${(s.ai||[]).length}</td></tr>`;}).join('');
-  document.querySelectorAll('#cmpBody tr').forEach(tr=>{const go=()=>{st.code=tr.dataset.code;location.hash='lookup';update();}; tr.onclick=go; tr.onkeydown=e=>{if(e.key==='Enter')go();};});
+  document.querySelectorAll('#cmpBody tr').forEach(tr=>{const go=()=>{st.code=tr.dataset.code;goTab('lookup');update();}; tr.onclick=go; tr.onkeydown=e=>{if(e.key==='Enter')go();};});
 }
 
 /* concepts + footer */
@@ -876,11 +876,19 @@ document.getElementById('fedTimeline').innerHTML=FED_CHANGES.map(x=>`<li><time d
 document.getElementById('srcList').innerHTML=SOURCES.map(([t,u])=>`<li>${u?`<a href="${u}" target="_blank" rel="noopener">${esc(t)}</a>`:esc(t)}</li>`).join('');
 
 /* tabs */
-function route(){
-  const h=(location.hash||'#lookup').slice(1); const tab=['lookup','compare','concepts'].includes(h)?h:'lookup';
-  ['lookup','compare','concepts'].forEach(k=>document.getElementById('view-'+k).hidden=(k!==tab));
+const TABS=['lookup','compare','concepts'];
+function showTab(tab){
+  if(!TABS.includes(tab)) tab='lookup';
+  TABS.forEach(k=>document.getElementById('view-'+k).hidden=(k!==tab));
   document.querySelectorAll('nav.tabs a').forEach(a=>{ if(a.dataset.tab===tab) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
 }
+function goTab(tab){
+  showTab(tab);
+  try{ history.replaceState(null,'','#'+tab); }catch(e){}
+  window.scrollTo(0,0);
+}
+function route(){ showTab((location.hash||'#lookup').slice(1)); }
+document.querySelectorAll('nav.tabs a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();goTab(a.dataset.tab);}));
 window.addEventListener('hashchange',route);
 route(); renderCmp(); update();
 })();
