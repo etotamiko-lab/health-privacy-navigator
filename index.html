@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Look up which federal, state, and AI-specific rules protect health data in every U.S. state, based on who holds the data. By TechInHSR.">
+<style>[hidden]{display:none!important}</style>
+<title>Health Privacy Navigator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap">
+<style>
+/* Layout: control rail (map, holder, data types) beside a layered results column; tabs for compare and concepts. */
+:root{
+  --bg:#f4f7f6; --surface:#ffffff; --sunk:#e9f0ee; --ink:#12302c; --muted:#556c67; --line:#d5e1de;
+  --teal:#0b6e64; --teal-2:#0e8f7f; --teal-soft:#d6ece8; --gold:#b8901c; --gold-soft:#f5ebcd;
+  --t-broad:#0b6e64; --t-comp:#5fa79c; --t-soon:#d9b649; --t-base:#c9d6d3; --t-ink-dark:#ffffff; --t-ink-light:#12302c;
+  --yes:#0b6e64; --yes-bg:#dcefeb; --dep:#8a6a0e; --dep-bg:#f7edcf; --no:#6c7c79; --no-bg:#eceff0; --soon:#7a4f9a; --soon-bg:#efe6f5;
+  --display:'DM Serif Display', Georgia, 'Times New Roman', serif;
+  --body:'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono:'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1917; --surface:#12231f; --sunk:#0f1f1c; --ink:#e3eeeb; --muted:#9bb2ad; --line:#24403a;
+  --teal:#47b9a7; --teal-2:#5cc8b6; --teal-soft:#183a34; --gold:#e1bd55; --gold-soft:#3a3017;
+  --t-broad:#2fa594; --t-comp:#1f6a60; --t-soon:#a98a2c; --t-base:#2a3c38; --t-ink-dark:#06120f; --t-ink-light:#d7e6e2;
+  --yes:#5cc8b6; --yes-bg:#163a33; --dep:#e6c35f; --dep-bg:#3a3118; --no:#93a4a0; --no-bg:#1d2b28; --soon:#c9a3e6; --soon-bg:#2f2238;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1917; --surface:#12231f; --sunk:#0f1f1c; --ink:#e3eeeb; --muted:#9bb2ad; --line:#24403a;
+  --teal:#47b9a7; --teal-2:#5cc8b6; --teal-soft:#183a34; --gold:#e1bd55; --gold-soft:#3a3017;
+  --t-broad:#2fa594; --t-comp:#1f6a60; --t-soon:#a98a2c; --t-base:#2a3c38; --t-ink-dark:#06120f; --t-ink-light:#d7e6e2;
+  --yes:#5cc8b6; --yes-bg:#163a33; --dep:#e6c35f; --dep-bg:#3a3118; --no:#93a4a0; --no-bg:#1d2b28; --soon:#c9a3e6; --soon-bg:#2f2238;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;margin:0}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:var(--teal)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;margin:0}
+/* header */
+header.top{border-bottom:1px solid var(--line);background:var(--surface)}
+header.top .wrap{padding-block:22px 0;display:flex;flex-direction:column;gap:14px}
+.brand{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+.brand b{color:var(--gold);font-weight:500}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(30px,4.2vw,44px);line-height:1.05;letter-spacing:-.01em}
+.lede{max-width:70ch;color:var(--muted);margin:0}
+.lede q{font-style:italic;color:var(--ink)}
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+nav.tabs a{text-decoration:none;color:var(--muted);font-weight:600;font-size:14px;padding:10px 14px;border-bottom:3px solid transparent}
+nav.tabs a[aria-current="page"]{color:var(--ink);border-color:var(--gold)}
+main .wrap{padding-block:24px 48px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+/* lookup layout */
+.lookup{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:960px){.lookup{grid-template-columns:minmax(0,1fr)}}
+.rail{display:flex;flex-direction:column;gap:22px}
+@media (max-width:960px){.rail{position:static}}
+.step{display:flex;flex-direction:column;gap:10px}
+.step h2{font-family:var(--body);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:flex;gap:8px;align-items:baseline}
+.step h2 span{font-family:var(--mono);color:var(--gold);font-weight:500}
+/* tile map */
+.map{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px}
+.map button{aspect-ratio:1;max-width:100%;border:0;border-radius:4px;font:600 10.5px/1 var(--body);cursor:pointer;padding:0;transition:transform .12s}
+.map button:hover{transform:scale(1.08)}
+.map button[aria-pressed="true"]{outline:2.5px solid var(--gold);outline-offset:1px;position:relative;z-index:1}
+.tier-broad{background:var(--t-broad);color:var(--t-ink-dark)}
+.tier-comp{background:var(--t-comp);color:var(--t-ink-dark)}
+.tier-soon{background:var(--t-soon);color:var(--t-ink-light)}
+.tier-base{background:var(--t-base);color:var(--t-ink-light)}
+:root:not([data-theme="dark"]) .tier-comp{color:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+select,input[type=search]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:9px 10px;width:100%}
+/* holder choices */
+.holders{display:flex;flex-direction:column;gap:6px}
+.holders label{display:grid;grid-template-columns:18px 1fr;gap:10px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer}
+.holders label:has(input:checked){border-color:var(--teal);background:var(--teal-soft)}
+.holders input{margin:3px 0 0;accent-color:var(--teal)}
+.holders b{display:block;font-size:14px}
+.holders small{color:var(--muted);font-size:12.5px;line-height:1.35;display:block}
+.helper{font-size:13px}
+.helper summary{cursor:pointer;color:var(--teal);font-weight:600}
+.helper ol{margin:8px 0 0;padding-left:18px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:500 13px var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 11px;cursor:pointer}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+/* results */
+.results{display:flex;flex-direction:column;gap:26px;min-width:0}
+.rhead{display:flex;flex-direction:column;gap:8px}
+.rhead h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,3.4vw,38px);line-height:1.08}
+.rhead .who{color:var(--muted);font-size:14px}
+.verdicts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.verdicts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.v{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.v .k{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.v .val{font-weight:700;font-size:15px;line-height:1.25}
+.bottom{background:var(--surface);border-left:4px solid var(--gold);border-radius:0 8px 8px 0;padding:14px 16px;max-width:78ch}
+.bottom p{margin:0}
+.bottom p+p{margin-top:8px}
+section.layer{display:flex;flex-direction:column;gap:10px}
+.layer>header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:6px}
+.layer>header h3{font-family:var(--display);font-weight:400;font-size:23px}
+.layer>header p{margin:0;color:var(--muted);font-size:13px}
+.rule{display:grid;grid-template-columns:118px minmax(0,1fr);gap:14px;padding:12px 0;border-bottom:1px dashed var(--line)}
+.rule:last-child{border-bottom:0}
+@media (max-width:520px){.rule{grid-template-columns:minmax(0,1fr);gap:6px}}
+.rule.dim{opacity:.62}
+.rule h4{margin:0;font-size:15px;line-height:1.3}
+.rule .cite{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:2px}
+.rule p{margin:6px 0 0;max-width:72ch}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 8px;border-radius:4px;white-space:nowrap;align-self:start;justify-self:start}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.p-yes{color:var(--yes);background:var(--yes-bg)}
+.p-dep{color:var(--dep);background:var(--dep-bg)}
+.p-no{color:var(--no);background:var(--no-bg)}
+.p-soon{color:var(--soon);background:var(--soon-bg)}
+.tag{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:1px 5px;margin-left:6px;white-space:nowrap}
+.sens{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:640px){.sens{grid-template-columns:minmax(0,1fr)}}
+.sens div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.sens h4{margin:0 0 4px;font-size:14px}
+.sens p{margin:0;font-size:14px;color:var(--ink)}
+.sens p+p{margin-top:6px;color:var(--muted);font-size:13px}
+.gaps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:78ch}
+.pend{background:var(--gold-soft);border-radius:8px;padding:12px 14px;font-size:14px}
+.pend p{margin:0}
+.pend p+p{margin-top:6px}
+details.more summary{cursor:pointer;color:var(--teal);font-weight:600;font-size:14px;padding:6px 0}
+.note{font-size:12.5px;color:var(--muted);max-width:78ch}
+/* compare */
+.cmp-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.cmp-controls input{max-width:260px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:900px;font-size:13.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--sunk);position:sticky;top:0}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--teal-soft)}
+td.num{font-variant-numeric:tabular-nums;text-align:center}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:7px}
+/* concepts */
+.concepts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:800px){.concepts{grid-template-columns:minmax(0,1fr)}}
+.concept{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.concept h3{font-family:var(--display);font-weight:400;font-size:22px}
+.concept p{margin:0}
+.concept.wide{grid-column:1/-1}
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-top:8px}
+@media (max-width:700px){.flow{grid-template-columns:minmax(0,1fr)}}
+.flow div{padding:12px 14px;border-top:4px solid var(--teal);background:var(--sunk);display:flex;flex-direction:column;gap:4px}
+.flow div:nth-child(3){border-color:var(--gold)}
+.flow div:nth-child(4){border-color:var(--no)}
+.flow b{font-size:14px}
+.flow span{font-size:12.5px;color:var(--muted)}
+.timeline{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.timeline li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;font-size:14px}
+.timeline time{font-family:var(--mono);font-size:12px;color:var(--gold);padding-top:2px}
+.qs{columns:2;column-gap:28px;margin:0;padding-left:18px}
+@media (max-width:700px){.qs{columns:1}}
+.qs li{margin-bottom:6px;break-inside:avoid}
+footer.foot{border-top:1px solid var(--line);background:var(--surface)}
+footer.foot .wrap{padding-block:24px 36px;display:flex;flex-direction:column;gap:12px;font-size:13px;color:var(--muted)}
+footer.foot ol{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">TechInHSR <b>/</b> AI and human subjects research tools</div>
+    <h1>Health Privacy Navigator</h1>
+    <p class="lede">Health data is protected by who holds it, not by what it is. Pick a state, pick who holds the data, and see which federal and state rules apply, where AI-specific laws add duties, and where the gaps are. Built in answer to a patient advocate's wish for <q>a public facing tool... what's protected, what's not protected in one spot.</q></p>
+    <nav class="tabs" aria-label="Views">
+      <a href="#lookup" data-tab="lookup">Look up a state</a>
+      <a href="#compare" data-tab="compare">Compare states</a>
+      <a href="#concepts" data-tab="concepts">Key concepts</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+<div id="view-lookup" class="lookup">
+  <aside class="rail" aria-label="Choose a scenario">
+    <div class="step">
+      <h2><span>1</span> State</h2>
+      <div class="map" id="map" role="group" aria-label="States"></div>
+      <div class="legend" id="legend"></div>
+      <label class="eyebrow" for="stateSel">Or choose from the list</label>
+      <select id="stateSel"></select>
+    </div>
+    <div class="step">
+      <h2><span>2</span> Who holds the data</h2>
+      <div class="holders" id="holders" role="radiogroup"></div>
+      <details class="helper">
+        <summary>Not sure if HIPAA applies?</summary>
+        <ol>
+          <li>Is it a health plan, a clearinghouse, or a provider that bills insurance electronically? Then it is a covered entity.</li>
+          <li>Does it handle PHI on behalf of one, under a business associate agreement? Then it is a business associate.</li>
+          <li>Neither? Then HIPAA does not apply, even to plainly medical data. A provider paid only in cash may fall here.</li>
+        </ol>
+      </details>
+    </div>
+    <div class="step">
+      <h2><span>3</span> Sensitive data involved</h2>
+      <div class="chips" id="chips"></div>
+    </div>
+  </aside>
+
+  <div class="results" id="results" aria-live="polite"></div>
+</div>
+
+<div id="view-compare" hidden>
+  <div class="cmp-controls">
+    <input type="search" id="cmpSearch" placeholder="Filter by state" aria-label="Filter by state">
+    <div class="chips" id="cmpFilters"></div>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>State</th><th>Reach outside HIPAA</th><th>Consumer privacy law</th><th>Health data consent</th><th>HIPAA exemption</th><th>Health-specific law</th><th>Health AI laws</th></tr></thead>
+      <tbody id="cmpBody"></tbody>
+    </table>
+  </div>
+  <p class="note">Select a row to open that state in the lookup. "Health AI laws" counts the laws listed in this tool; it is not a complete census of every bill.</p>
+</div>
+
+<div id="view-concepts" hidden>
+  <div class="concepts">
+    <div class="concept wide">
+      <div class="eyebrow">The core idea</div>
+      <h3>The protection does not follow the data</h3>
+      <p>The same lab result can be fully protected, partly protected, or unprotected depending on where it sits.</p>
+      <div class="flow">
+        <div><b>In the hospital EHR</b><span>HIPAA applies. Part 2 too if it is SUD treatment data.</span></div>
+        <div><b>Patient portal or API</b><span>HIPAA right of access and Cures Act rules push the data to the patient.</span></div>
+        <div><b>On the patient's phone</b><span>HIPAA no longer applies. The patient controls it.</span></div>
+        <div><b>Uploaded to an AI chatbot</b><span>The company's privacy policy, the FTC, and state law, if any. Training on chats depends on the terms.</span></div>
+      </div>
+    </div>
+    <div class="concept">
+      <div class="eyebrow">Coverage</div>
+      <h3>HIPAA covers who, not what</h3>
+      <p>HIPAA came from a 1996 law about insurance portability and electronic claims. It reaches health plans, clearinghouses, and providers that bill electronically, plus their business associates. Wearables, symptom searches, location history near a clinic, consumer apps, and many cash-pay telehealth services fall outside it.</p>
+      <p>Some states close part of this gap. Washington's My Health My Data Act, Nevada, and Connecticut regulate consumer health data. Texas and California apply their medical privacy laws to entities HIPAA misses.</p>
+    </div>
+    <div class="concept">
+      <div class="eyebrow">De-identification</div>
+      <h3>Lower risk is not no risk</h3>
+      <p>HIPAA de-identified data is outside HIPAA. The Safe Harbor list of 18 identifiers dates from 2000. Expert Determination considers what else a recipient could link to. When a recipient re-identifies data, HHS has no authority to act, because the data was never PHI in their hands.</p>
+      <p>AI models make linkage easier, and large language models can memorize training data. State definitions of de-identified data differ from HIPAA's.</p>
+    </div>
+    <div class="concept">
+      <div class="eyebrow">Consent</div>
+      <h3>Opt-in, opt-out, and the right to limit</h3>
+      <p>Most state consumer privacy laws treat health data as sensitive and require opt-in consent before a business processes it. California gives a right to limit use instead; Utah and Iowa use notice and opt-out. Maryland bans selling sensitive data outright. Most of these laws exempt HIPAA covered entities or PHI, and many exempt nonprofits and smaller businesses.</p>
+    </div>
+    <div class="concept">
+      <div class="eyebrow">Ghost AI</div>
+      <h3>Unapproved tools move PHI out of HIPAA</h3>
+      <p>When staff paste patient information into a consumer AI tool with no business associate agreement, the data leaves the controls HIPAA requires. That is a potential breach for the covered entity, and the AI company has no HIPAA duties toward it. A 2026 survey found about 1 in 5 health workers admitted using unapproved AI tools.</p>
+    </div>
+    <div class="concept">
+      <div class="eyebrow">Federal changes</div>
+      <h3>What changed recently</h3>
+      <ul class="timeline" id="fedTimeline"></ul>
+    </div>
+    <div class="concept">
+      <div class="eyebrow">Research</div>
+      <h3>Where IRBs fit</h3>
+      <p>Many state laws exempt research conducted under the Common Rule or FDA rules, or clinical trial data collected under them. That assumes those rules protect privacy and AI decisions, which is often not true for AI studies. Non-federally funded studies where an institution has unchecked the box may fall into the gap. Colorado's new law excludes IND drug trials but does not name IDE device studies.</p>
+    </div>
+    <div class="concept wide">
+      <div class="eyebrow">For patients and care partners</div>
+      <h3>Questions to ask when AI touches your care</h3>
+      <ol class="qs">
+        <li>What is the AI doing in my care, and who reviews its output?</li>
+        <li>What information about me is collected, shared, or kept, and for how long?</li>
+        <li>Is the AI scribe recording part of my record, and can I get a copy?</li>
+        <li>Are risk scores or predictions about me used, and can I see them?</li>
+        <li>Can an AI output affect my treatment, prior authorization, or coverage?</li>
+        <li>What happens if I say no or change my mind? What are the alternatives?</li>
+        <li>Can I opt out, or ask for my data to be deleted?</li>
+        <li>Will my conversations be used to train the AI?</li>
+        <li>Was this tool tested on people like me, with my condition, in my community?</li>
+        <li>How do I correct wrong information or ask for a human review?</li>
+        <li>If something goes wrong, who do I contact?</li>
+        <li>How does the AI affect what I pay?</li>
+      </ol>
+      <p class="note">Adapted from the patient advocate perspective presented at the Alliance for Health Policy briefing.</p>
+    </div>
+  </div>
+</div>
+
+</div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p><strong>Current as of October 29, 2026.</strong> Educational reference, not legal advice. Laws change quickly, several 2026 laws are not yet in effect, and some bill numbers and dates come from secondary trackers. Check the primary source before relying on any entry. State rules for sensitive data are summarized, not complete.</p>
+    <div>
+      <div class="eyebrow">Sources</div>
+      <ol id="srcList"></ol>
+    </div>
+    <p>&copy; 2026 TechInHSR LLC. Tamiko Eto, MA, CIP.</p>
+  </div>
+</footer>
+
+<script>
+/* Health Privacy Navigator data. Current as of October 29, 2026. Educational reference, not legal advice. */
+const AS_OF = '2026-10-29';
+
+/* Scenarios: who holds the data */
+const SCEN = {
+  ce:  { t: 'Hospital, clinic, or health plan', s: 'HIPAA covered entity. Bills insurance electronically.' },
+  ba:  { t: 'Vendor or AI tool working for one', s: 'Business associate under a BAA. AI scribe, EHR, cloud, coding.' },
+  dtc: { t: 'Cash-pay or direct-to-consumer care', s: 'Licensed provider that never bills insurance, such as some telehealth.' },
+  app: { t: 'Consumer app, wearable, or AI chatbot', s: 'Company outside the health care system.' },
+  pt:  { t: "Patient's own copy shared with AI", s: 'Records downloaded through the portal, then uploaded to a chatbot.' }
+};
+
+const DTYPES = {
+  mh: 'Mental health', sud: 'Substance use', repro: 'Reproductive and sexual health', hiv: 'HIV and STI',
+  gen: 'Genetic', bio: 'Biometric', minors: 'Minors', loc: 'Location', neural: 'Neural'
+};
+
+/* Federal layer. st values: yes | dep | no */
+const FED = [
+  { id: 'hipaa', name: 'HIPAA Privacy, Security, and Breach Notification Rules', cite: '45 CFR Parts 160 and 164',
+    st: { ce: 'yes', ba: 'yes', dtc: 'no', app: 'no', pt: 'no' },
+    why: {
+      ce: 'You are a covered entity. Uses for treatment, payment, and health care operations, which include many AI uses, are allowed without asking the patient. Marketing, sale of PHI, and most uses outside routine care need written authorization.',
+      ba: 'Business associates must meet the Security Rule and the limits in their business associate agreement, and are directly liable for some violations. Using PHI to train or improve an AI model has to fit what the agreement and a permitted purpose allow.',
+      dtc: 'HIPAA reaches a provider only if it conducts standard electronic transactions, such as billing insurance. A practice that only takes cash and never does so is likely outside HIPAA, even though the records look like any medical record.',
+      app: 'HIPAA does not reach a company that is neither a covered entity nor a business associate, even when the data is plainly health data.',
+      pt: 'HIPAA gives patients the right to get copies of their records. Once the patient holds the copy, HIPAA protection does not follow it into an app or chatbot.'
+    } },
+  { id: 'deid', name: 'HIPAA de-identification standard', cite: '45 CFR 164.514(b)',
+    st: { ce: 'yes', ba: 'yes', dtc: 'no', app: 'no', pt: 'no' },
+    why: 'Data de-identified by Safe Harbor (remove 18 identifiers, a list unchanged since 2000) or by Expert Determination is no longer regulated by HIPAA. HHS has no authority over a recipient who later re-identifies it, and AI linkage across datasets makes that easier.' },
+  { id: 'part2', name: '42 CFR Part 2 (substance use disorder records)', cite: '42 CFR Part 2; 2024 rule, compliance required by Feb 16, 2026', sens: 'sud',
+    st: { ce: 'dep', ba: 'dep', dtc: 'dep', app: 'no', pt: 'no' },
+    why: 'Applies to federally assisted SUD treatment programs and to anyone who lawfully receives their records. The 2024 rule allows one patient consent for treatment, payment, and operations, but the records still cannot be used against the patient in legal proceedings without consent or a court order.' },
+  { id: 'ftc5', name: 'FTC Act Section 5 (unfair or deceptive practices)', cite: '15 U.S.C. 45',
+    st: { ce: 'dep', ba: 'dep', dtc: 'yes', app: 'yes', pt: 'yes' },
+    why: {
+      ce: 'The FTC can reach for-profit companies, but for PHI the main regulator is HHS.',
+      ba: 'Applies to for-profit vendors, mainly for promises made to the public.',
+      dtc: 'The main federal backstop when HIPAA does not apply. The FTC enforces what the privacy policy promises and has acted against health companies that shared data with advertisers, such as GoodRx and BetterHelp in 2023.',
+      app: 'The main federal backstop outside HIPAA. The FTC enforces privacy policy promises and has acted against health apps that shared data with advertisers, such as GoodRx and BetterHelp in 2023. A company that discloses a practice in its policy can often still do it.',
+      pt: 'Whatever the AI company promised in its privacy policy is enforceable by the FTC. Whether chats are used for training, and whether you can opt out, depends on those terms.'
+    } },
+  { id: 'hbnr', name: 'FTC Health Breach Notification Rule', cite: '16 CFR Part 318, amended 2024',
+    st: { ce: 'no', ba: 'no', dtc: 'dep', app: 'yes', pt: 'yes' },
+    why: 'Covers vendors of personal health records and related entities that HIPAA does not cover. Since July 2024 it clearly includes health apps that pull data from more than one source. A "breach" includes sharing the user did not authorize, not only hacking.' },
+  { id: 'gina', name: 'GINA (genetic information)', cite: 'Genetic Information Nondiscrimination Act of 2008', sens: 'gen',
+    st: { ce: 'dep', ba: 'no', dtc: 'no', app: 'no', pt: 'no' },
+    why: 'Bars health insurers and employers from using genetic information. It does not cover life, disability, or long-term care insurance, does not cover genetic testing companies or apps, and does not protect the condition itself once it develops.' },
+  { id: 'cures', name: '21st Century Cures Act information blocking rules', cite: '45 CFR Part 171',
+    st: { ce: 'yes', ba: 'dep', dtc: 'dep', app: 'no', pt: 'yes' },
+    why: {
+      ce: 'Providers must not unreasonably block access, exchange, or use of electronic health information when the law allows sharing. Where a state law requires consent or bars a disclosure, the privacy exception can apply.',
+      ba: 'Applies if you are a certified health IT developer or a health information network or exchange.',
+      dtc: 'Applies to health care providers as defined in the rule, regardless of how they are paid.',
+      app: 'Does not apply to consumer apps.',
+      pt: 'Certified EHRs must offer patient-access APIs, so patients can send records to apps of their choice, including AI tools that HIPAA does not cover.'
+    } },
+  { id: 'coppa', name: 'COPPA (children under 13)', cite: '16 CFR Part 312; amended rule, compliance by Apr 22, 2026', sens: 'minors',
+    st: { ce: 'no', ba: 'no', dtc: 'dep', app: 'yes', pt: 'dep' },
+    why: 'Online services directed to children, or that know a user is under 13, need verifiable parental consent before collecting personal information. The amended rule adds separate consent before sharing with third parties such as advertisers.' }
+];
+
+const FED_CHANGES = [
+  { d: '2024-06-20', t: 'Court vacates part of HHS online tracking guidance (unauthenticated public web pages). The rest still applies.' },
+  { d: '2025-01-06', t: 'HHS proposes Security Rule update (MFA, encryption, asset inventory). Still proposed; final action targeted for July 2027.' },
+  { d: '2025-06-18', t: 'Purl v. HHS vacates the 2024 HIPAA reproductive health privacy rule, except its Notice of Privacy Practices changes.' },
+  { d: '2025-12-11', t: 'Executive order on a national AI policy framework directs the Attorney General to challenge state AI laws seen as inconsistent with it.' },
+  { d: '2026-02-16', t: 'Compliance date for the Part 2 rule and the updated Notice of Privacy Practices.' },
+  { d: '2026-04-02', t: 'HHS sends Privacy Rule care coordination and access final rule to OIRA. Not published as of this update.' }
+];
+
+const SHIELD = ['CA','CO','CT','DE','DC','HI','IL','ME','MD','MA','MN','NV','NJ','NM','NY','OR','RI','VT','VA','WA'];
+
+/* State data.
+   cp = comprehensive consumer privacy law. st: effect | enacted | narrow. hx: entity | data | both. sens: opt-in | opt-out
+   chd = consumer health data law. med = health information confidentiality. beyond = reaches entities HIPAA does not.
+   ai  = health AI laws. c: clinical | payer | chatbot | mh | gov
+   s   = notes by data type. pend = pending items. */
+const ST = {
+AL:{n:'Alabama',
+  cp:{law:'Alabama Personal Data Protection Act (HB 351, 2026)',eff:'2027-05-01',st:'enacted',hx:'both',sens:'opt-in',note:'Applies to businesses that handle data of more than 25,000 consumers or earn over 25% of revenue from selling personal data. Consent is required for targeted ads or sales when the business knows a consumer is 13 to 15.'},
+  ai:[{c:'payer',law:'2026 prior authorization law',eff:'2026-10-01',t:'AI cannot be the only basis for denying prior authorization. A human must review, and plans must disclose AI use in utilization review.'}],
+  s:{gen:'Alabama genetic data privacy law (2024) requires consent from direct-to-consumer genetic testing companies before they use or share genetic data.',minors:'App store age verification and parental consent law (HB 161) takes effect January 1, 2027.'}},
+AK:{n:'Alaska',
+  s:{gen:'Alaska Genetic Privacy Act (AS 18.13) requires informed consent to collect, analyze, or disclose DNA results, and lets individuals sue.'}},
+AZ:{n:'Arizona',
+  ai:[{c:'payer',law:'HB 2175 (2025)',eff:'2026-07-01',t:'A medical director must personally review a medical necessity denial and use independent judgment. AI cannot stand in for that review.'}],
+  s:{gen:'Arizona Genetic Information Privacy Act (2021) covers direct-to-consumer genetic testing companies.'}},
+AR:{n:'Arkansas'},
+CA:{n:'California',
+  cp:{law:'California Consumer Privacy Act, as amended by CPRA',eff:'2023-01-01',st:'effect',hx:'data',sens:'opt-out',note:'Health, genetic, biometric, and neural data are "sensitive personal information." Consumers get a right to limit its use rather than an opt-in. PHI and CMIA-covered medical information are exempt, as is clinical trial data collected under the Common Rule, FDA rules, or GCP. CPPA automated decision-making rules cover AI used for significant decisions, including health care services, phasing in 2026 to 2027.'},
+  med:{law:'Confidentiality of Medical Information Act (CMIA), Civil Code 56 et seq.',beyond:true,t:'Stricter than HIPAA in places and reaches beyond it. It covers providers, plans, their contractors, and businesses that offer apps, software, or hardware designed to maintain medical information, including mental health and reproductive health apps. Patients can sue. Starting January 1, 2027, AB 1979 treats a business offering a consumer "health care chatbot" as a provider for CMIA purposes.'},
+  ai:[
+    {c:'clinical',law:'AB 3030',eff:'2025-01-01',t:'Facilities, clinics, and physician offices must label patient clinical communications written by generative AI and tell patients how to reach a human. No label is needed if a licensed provider reviewed the message first.'},
+    {c:'payer',law:'SB 1120',eff:'2025-01-01',t:'Only a licensed physician or qualified professional can deny, delay, or modify care for medical necessity. AI tools in utilization review must rely on the individual patient\'s records.'},
+    {c:'chatbot',law:'AB 489',eff:'2026-01-01',t:'AI tools may not use titles, wording, or design that suggests a licensed health professional is providing care.'},
+    {c:'chatbot',law:'SB 243 (companion chatbots)',eff:'2026-01-01',t:'Companion chatbots must disclose they are AI, keep suicide and self-harm protocols with crisis referrals, and add protections for known minors. Injured users can sue.'},
+    {c:'clinical',law:'AB 1979',eff:'2027-01-01',t:'A licensed clinician must keep independent judgment when clinical decision support informs care. AI may not independently perform licensed functions. Consumer health care chatbots fall under the CMIA.'},
+    {c:'gov',law:'SB 503',eff:'2027-01-01',t:'Developers and deployers of clinical decision support must identify and reduce foreseeable bias. Developers document intended use, training data, and performance; deployers monitor.'},
+    {c:'chatbot',law:'SB 1119',eff:'2027-01-01',t:'Child safety rules for companion chatbots: age assurance from January 1, 2027, then risk assessments, audits, and parental controls from July 1, 2027.'},
+    {c:'gov',law:'AB 2013 and SB 942',eff:'2026-01-01',t:'Developers of generative AI made available to the public, including academic medical centers that fine-tune and release tools, must post training data summaries. Large gen AI providers must offer AI content detection.'}],
+  s:{mh:'Lanterman-Petris-Short Act (Welfare and Institutions Code 5328) sets strict confidentiality for mental health records at covered facilities.',
+     hiv:'Health and Safety Code 120980 requires written authorization to disclose HIV test results in most cases.',
+     repro:'Shield laws limit sharing abortion and gender-affirming care information with out-of-state investigators. AB 352 requires EHR systems to segregate and limit access to sensitive services data. Geofencing around family planning centers is barred.',
+     gen:'Genetic Information Privacy Act (SB 41) requires consent from direct-to-consumer genetic testing companies.',
+     bio:'Biometric data is sensitive personal information under the CCPA.',
+     neural:'SB 1223 made neural data sensitive personal information under the CCPA (2025).',
+     minors:'Under the CCPA, selling or sharing data of consumers under 16 requires opt-in consent (a parent for those under 13).'}},
+CO:{n:'Colorado',
+  cp:{law:'Colorado Privacy Act',eff:'2023-07-01',st:'effect',hx:'data',sens:'opt-in',note:'PHI is exempt, but there is no blanket exemption for covered entities, and nonprofits are covered. Biometric rules apply regardless of size, and minors\' protections were added in 2025.'},
+  ai:[
+    {c:'mh',law:'HB 26-1195',eff:'2026-08-12',t:'AI may not hold therapeutic conversations except in a live session where the provider is present. Providers must approve AI treatment recommendations and get written, revocable consent before AI records or transcribes a session. Offering AI therapy without a licensed professional is a deceptive trade practice.'},
+    {c:'payer',law:'HB 26-1139',eff:'2027-01-01',t:'AI coverage decisions must rest on the individual patient\'s history. A licensed clinician must review medical necessity denials, and payers may not pay for AI-delivered psychotherapy.'},
+    {c:'gov',law:'SB 26-189 (replaces the Colorado AI Act)',eff:'2027-01-01',t:'Notice before automated decision technology materially influences a consequential decision, including health care services; explanation of adverse outcomes within 30 days; human review. HIPAA covered entities and business associates are largely exempt for non-employment uses but must give patients a general notice of advanced technology use. IND trials under 21 CFR 312 are excluded; IDE device studies are not named. The original SB 24-205 never took effect.'},
+    {c:'chatbot',law:'HB 26-1263',eff:'2027-01-01',t:'Requirements for conversational AI operators, including AI disclosure, minor safeguards, and crisis detection.'}],
+  s:{mh:'Colorado limits disclosure of mental health records more tightly than HIPAA for certain providers and facilities.',
+     repro:'Shield law (SB 23-188) protects reproductive and gender-affirming care information from out-of-state actions.',
+     bio:'2024 amendment (HB 24-1130) sets biometric rules that apply to any controller, regardless of size.',
+     neural:'Neural data is sensitive data under the Colorado Privacy Act (HB 24-1058).',
+     minors:'Heightened duties for controllers who know or willfully disregard that a user is under 18 (SB 24-041).'}},
+CT:{n:'Connecticut',
+  cp:{law:'Connecticut Data Privacy Act (CTDPA)',eff:'2023-07-01',st:'effect',hx:'entity',sens:'opt-in',note:'HIPAA covered entities are exempt as entities. Amendments: PA 25-113 (July 1, 2026) lowers thresholds, covers anyone processing sensitive data, and requires notice if personal data trains large language models. SB 4 (October 1, 2026) adds facial recognition rules and bans selling precise geolocation.'},
+  chd:{law:'Consumer health data provisions of the CTDPA (SB 3, 2023)',eff:'2023-07-01',t:'Apply to any person handling consumer health data, with no size threshold and no nonprofit exemption. Consent is required to sell consumer health data, and geofencing within 1,750 feet of mental, reproductive, or sexual health facilities is barred. Enforced by the Attorney General.'},
+  ai:[
+    {c:'gov',law:'SB 5, AI Responsibility and Transparency (AIRT) Act',eff:'2026-10-01',t:'Covers frontier model safety, employment decision tools, AI companions, synthetic media, and a research sandbox. Systems used only for health care education, clinical support, medication reminders, or treatment support are not "AI companions" if they do not present as human or target emotional needs. Pre-market research and prototyping are excluded.'},
+    {c:'gov',law:'2026 AI sandbox and verification pilot',eff:'2027-07-01',t:'Plan for a state AI regulatory sandbox, including a multistate study, and a pilot for independent verification organizations.'}],
+  s:{mh:'Psychiatrist-patient and psychologist-patient confidentiality laws are stricter than HIPAA.',
+     hiv:'Connecticut law (C.G.S. 19a-583) restricts disclosure of HIV-related information.',
+     repro:'Shield law protects reproductive and gender-affirming care information (2022, expanded since).',
+     loc:'Geofencing within 1,750 feet of mental, reproductive, or sexual health facilities is barred. Selling precise geolocation is barred from October 1, 2026.',
+     neural:'Neural data is sensitive data from July 1, 2026.',
+     minors:'Selling minors\' data and targeted ads to minors under 18 are barred.'}},
+DE:{n:'Delaware',
+  cp:{law:'Delaware Personal Data Privacy Act',eff:'2025-01-01',st:'effect',hx:'data',sens:'opt-in',note:'Low threshold (35,000 consumers). PHI is exempt, but there is no blanket exemption for covered entities, and most nonprofits are covered.'},
+  s:{repro:'Shield law protects reproductive health care information from out-of-state actions.',minors:'Consent required to sell data or target ads to consumers 13 to 17.'},
+  pend:['HB 380 (passed June 2026) would lower thresholds and add data minimization and impact assessments. Check for the Governor\'s action.']},
+DC:{n:'District of Columbia',
+  s:{mh:'DC Mental Health Information Act sets stricter rules for mental health information.',repro:'Shield law protects reproductive and gender-affirming care information.'}},
+FL:{n:'Florida',
+  cp:{law:'Florida Digital Bill of Rights',eff:'2024-07-01',st:'narrow',hx:'entity',sens:'opt-in',note:'Applies only to very large companies (over $1 billion in revenue with specific business lines), so it reaches few health companies.'},
+  med:{law:'Florida patient records law (F.S. 456.057) and EHR location rule (F.S. 408.051)',t:'Licensed practitioners must keep records confidential. Since 2023, EHRs holding patient information must be stored in the continental U.S., its territories, or Canada.'},
+  s:{gen:'F.S. 760.40 requires consent for DNA analysis, and a 2023 law makes unauthorized genetic testing or sharing a crime.'}},
+GA:{n:'Georgia',
+  ai:[{c:'payer',law:'2026 utilization review law',eff:'2027-01-01',t:'AI cannot be the only basis for denying care without human review.'},
+      {c:'chatbot',law:'2026 chatbot law',eff:'2027-07-01',t:'Minor safeguards, crisis detection, and a ban on chatbots posing as mental health providers.'}],
+  s:{hiv:'Georgia law limits disclosure of AIDS-related confidential information.'}},
+HI:{n:'Hawaii',
+  med:{law:'Health Care Privacy Harmonization Act (HRS 323B)',t:'Hawaii aligns its health privacy law with HIPAA, so a covered entity that complies with HIPAA generally complies with state law.'},
+  ai:[{c:'chatbot',law:'SB 3001 (2026)',eff:'2026-07-14',t:'Conversational AI must disclose it is AI, keep suicide and self-harm protocols, and not present as a licensed mental health provider. Adds minor protections; annual reporting starts January 1, 2027.'}],
+  s:{repro:'Shield law protects reproductive health care information (2023).'}},
+ID:{n:'Idaho',
+  ai:[{c:'chatbot',law:'S 1297 (2026)',eff:'2027-07-01',t:'Minor safeguards and crisis detection for AI chatbots.'}]},
+IL:{n:'Illinois',
+  med:{law:'Mental Health and Developmental Disabilities Confidentiality Act and related laws',t:'Illinois has some of the strictest sensitive-data laws in the country, several with a private right of action that has driven large class actions.'},
+  ai:[{c:'mh',law:'HB 1806, Wellness and Oversight for Psychological Resources Act',eff:'2025-08-04',t:'Only licensed professionals can provide therapy. AI may handle administrative and supplementary tasks but may not make therapeutic decisions, talk with clients therapeutically, or detect emotions. Recording or transcribing a session with AI needs written notice and consent.'},
+      {c:'payer',law:'2026 downcoding law',eff:'2028-01-01',t:'Payers may not use algorithms to downcode claims without a person making or reviewing the decision.'}],
+  s:{mh:'Mental Health and Developmental Disabilities Confidentiality Act (740 ILCS 110) requires consent for most disclosures, including many that HIPAA allows, and lets patients sue.',
+     hiv:'AIDS Confidentiality Act restricts HIV test disclosures.',
+     repro:'Shield law protects reproductive and gender-affirming care information.',
+     gen:'Genetic Information Privacy Act (410 ILCS 513) restricts use and disclosure of genetic testing results and lets individuals sue.',
+     bio:'Biometric Information Privacy Act (BIPA) requires written consent before collecting face, voice, or fingerprint data, with a private right of action. Health care has narrow exemptions, so AI scribes and identity tools need review.'}},
+IN:{n:'Indiana',
+  cp:{law:'Indiana Consumer Data Protection Act',eff:'2026-01-01',st:'effect',hx:'entity',sens:'opt-in',note:'HIPAA covered entities and business associates are exempt as entities.'},
+  ai:[{c:'payer',law:'2026 downcoding law',eff:'2026-07-01',t:'Payers may not use AI to downcode claims without physician oversight.'}]},
+IA:{n:'Iowa',
+  cp:{law:'Iowa Consumer Data Protection Act',eff:'2025-01-01',st:'effect',hx:'entity',sens:'opt-out',note:'Sensitive data needs notice and a chance to opt out, not opt-in consent. HIPAA covered entities are exempt as entities.'},
+  ai:[{c:'chatbot',law:'SF 2417 (2026)',eff:'2027-07-01',t:'Minor safeguards and parental tools for AI chatbots, and a ban on posing as a mental health provider.'}]},
+KS:{n:'Kansas'},
+KY:{n:'Kentucky',
+  cp:{law:'Kentucky Consumer Data Protection Act',eff:'2026-01-01',st:'effect',hx:'both',sens:'opt-in',note:'Exempts HIPAA covered entities and PHI. Requires data protection assessments for profiling that risks unlawful disparate impact.'}},
+LA:{n:'Louisiana',
+  cp:{law:'Louisiana Data Privacy Act (2026)',eff:'2027-01-01',st:'enacted',hx:'both',sens:'opt-in',note:'Applies to businesses with over $25 million in revenue or data on 75,000 or more consumers. Data brokers must post "NOTICE: We may sell your sensitive personal data."'},
+  ai:[{c:'clinical',law:'2026 AI documentation notice law',eff:'2026-08-01',t:'Providers must tell patients when AI records or documents a visit.'}],
+  s:{sud:'Louisiana adds confidentiality rules for addiction professionals beyond Part 2.',minors:'App store age verification law (HB 977) takes effect July 1, 2027.'}},
+ME:{n:'Maine',
+  med:{law:'22 M.R.S. 1711-C',t:'Health care practitioners and facilities must keep health care information confidential and need authorization for most disclosures outside care, with stricter limits than HIPAA in places.'},
+  ai:[{c:'mh',law:'LD 2082 (2026)',eff:'2026-07-29',t:'Therapy through AI is barred unless a licensed professional provides it. AI is limited to supplementary support, with written disclosure and consent before sessions are recorded or transcribed.'},
+      {c:'chatbot',law:'Chatbot disclosure law (2025)',eff:'2025-09-24',t:'Businesses may not use chatbots that could mislead consumers into thinking they are human without clear notice.'}],
+  s:{repro:'Shield law protects reproductive and gender-affirming care information.'},
+  pend:['Maine has considered a comprehensive privacy bill in recent sessions. None enacted as of this update.']},
+MD:{n:'Maryland',
+  cp:{law:'Maryland Online Data Privacy Act',eff:'2025-10-01',st:'effect',hx:'data',sens:'opt-in',note:'The strictest data minimization rule in the country: sensitive data may be collected only when strictly necessary for the product or service the consumer asked for. Sale of sensitive data is banned outright, even with consent. Since July 1, 2026, data inferred to reveal a sensitive category counts as sensitive.'},
+  med:{law:'Maryland Confidentiality of Medical Records Act (Health-General 4-301 et seq.)',t:'Stricter than HIPAA in several areas, including limits on redisclosure and on mental health records.'},
+  ai:[{c:'payer',law:'HB 820 (2025)',eff:'2025-10-01',t:'AI in utilization review must rely on the individual patient\'s history, keep provider judgment in the loop, avoid discrimination, and be reviewed for accuracy. Adverse decisions are reported quarterly.'}],
+  s:{repro:'Shield laws protect reproductive and gender-affirming care information, and a 2024 law limits disclosure of that data through health information exchanges.',
+     minors:'No targeted ads or sale of data for consumers the business knows or should know are under 18. Maryland Kids Code applies to online products likely accessed by children.'}},
+MA:{n:'Massachusetts',
+  med:{law:'Patient rights and confidentiality laws (M.G.L. c. 111 sec. 70E and others)',t:'Massachusetts has several sensitive-data laws stricter than HIPAA, though no comprehensive consumer privacy law.'},
+  s:{mh:'Massachusetts protects records of certain mental health practitioners more strictly than HIPAA.',
+     sud:'Licensed SUD treatment facilities need patient consent to share records, even for treatment with providers outside the program.',
+     hiv:'M.G.L. c. 111 sec. 70F requires written consent for HIV test disclosures.',
+     gen:'M.G.L. c. 111 sec. 70G protects genetic information and requires consent for testing.',
+     repro:'Shield law protects reproductive and gender-affirming care information (2022, expanded 2024).'},
+  pend:['A comprehensive privacy bill and a location data bill have moved in the legislature. Check current status.']},
+MI:{n:'Michigan',
+  s:{mh:'Michigan Mental Health Code (MCL 330.1748) sets confidentiality rules for mental health records.'}},
+MN:{n:'Minnesota',
+  cp:{law:'Minnesota Consumer Data Privacy Act',eff:'2025-07-31',st:'effect',hx:'data',sens:'opt-in',note:'PHI is exempt, but covered entities are not exempt as entities. Gives consumers a right to question the result of profiling and to learn what data led to it.'},
+  med:{law:'Minnesota Health Records Act (Minn. Stat. 144.291 to 144.298)',t:'Generally requires patient consent before a provider discloses records, including some disclosures HIPAA allows without consent. Patients can sue.'},
+  ai:[{c:'payer',law:'2026 utilization review law',eff:'2026',t:'AI cannot be the only basis for denials without human review; plans disclose AI use to enrollees and the state.'}],
+  s:{repro:'Shield law protects reproductive and gender-affirming care information.'}},
+MS:{n:'Mississippi',
+  s:{mh:'Mississippi sets stricter confidentiality for records of certain mental health facilities and practitioners.'}},
+MO:{n:'Missouri'},
+MT:{n:'Montana',
+  cp:{law:'Montana Consumer Data Privacy Act',eff:'2024-10-01',st:'effect',hx:'entity',sens:'opt-in',note:'HIPAA covered entities are exempt as entities. 2025 amendments lowered thresholds and added minors\' protections.'},
+  s:{gen:'Montana Genetic Information Privacy Act (2023) covers direct-to-consumer genetic testing companies.'}},
+NE:{n:'Nebraska',
+  cp:{law:'Nebraska Data Privacy Act',eff:'2025-01-01',st:'effect',hx:'entity',sens:'opt-in',note:'Applies to businesses that are not small businesses, with no headcount threshold. Even small businesses need consent to sell sensitive data.'},
+  ai:[{c:'payer',law:'LB 77 (2025)',eff:'2025',t:'AI cannot be the only basis to deny, delay, or modify care, and plans must disclose AI use in utilization management.'},
+      {c:'chatbot',law:'LB 525 (2026)',eff:'2027-07-01',t:'Minor safeguards and a ban on chatbots posing as mental health providers.'}]},
+NV:{n:'Nevada',
+  chd:{law:'Consumer health data law (SB 370, NRS 603A)',eff:'2024-03-31',t:'Requires separate consent to collect and to share consumer health data, and signed authorization to sell it. Bars geofencing within 1,750 feet of health care facilities. HIPAA covered entities are exempt; nonprofits are not. Attorney General enforces; no private right of action.'},
+  ai:[{c:'mh',law:'AB 406 (2025)',eff:'2025-07-01',t:'AI may not provide services that would be professional mental or behavioral health care, or claim it can. Limits how licensed providers use AI, and bars schools from using AI for counselor functions.'}],
+  s:{repro:'Shield law protects reproductive health care information (SB 131, 2023).',loc:'Geofencing within 1,750 feet of health care facilities is barred.'}},
+NH:{n:'New Hampshire',
+  cp:{law:'New Hampshire Privacy Act',eff:'2025-01-01',st:'effect',hx:'entity',sens:'opt-in',note:'HIPAA covered entities are exempt as entities. A 2026 amendment bans selling data of children under 13 from January 1, 2027.'},
+  med:{law:'RSA 332-I',t:'Medical information belongs to the patient, and providers need written authorization to use it for marketing or sale.'}},
+NJ:{n:'New Jersey',
+  cp:{law:'New Jersey Data Privacy Act',eff:'2025-01-15',st:'effect',hx:'data',sens:'opt-in',note:'PHI is exempt, but covered entities are not exempt as entities. A June 2026 amendment banned the sale of sensitive data.'},
+  s:{repro:'Shield law protects reproductive and gender-affirming care information.',gen:'New Jersey Genetic Privacy Act requires consent to obtain or disclose genetic information.',minors:'Consent required for targeted ads, sale, or profiling of consumers 13 to 17.'}},
+NM:{n:'New Mexico',
+  s:{repro:'Shield laws protect reproductive and gender-affirming care information.',gen:'New Mexico Genetic Information Privacy Act requires consent for genetic analysis and disclosure.'}},
+NY:{n:'New York',
+  med:{law:'Public Health Law 18, Article 27-F, Mental Hygiene Law 33.13',t:'New York has strict laws for HIV, mental health, and SUD information. The SHIELD Act requires reasonable security safeguards for private information.'},
+  ai:[{c:'chatbot',law:'AI companion law (General Business Law Article 47)',eff:'2025-11-05',t:'AI companions must detect and respond to suicidal ideation and remind users at the start and every three hours that they are not talking to a human.'},
+      {c:'chatbot',law:'Safe by Design Act (2026)',eff:'2027-01-01',t:'Age assurance before access to AI companions and protections for children under 13.'},
+      {c:'gov',law:'RAISE Act (S6953B/A6453B)',eff:'2027',t:'Frontier AI developers must report safety incidents within 72 hours. Colleges and universities doing academic research are excluded from "covered developers."'}],
+  s:{sud:'New York adds consent and confidentiality rules for SUD records beyond Part 2.',
+     hiv:'Article 27-F requires specific written authorization for most HIV-related disclosures.',
+     mh:'Mental Hygiene Law 33.13 restricts disclosure of clinical records at licensed mental health facilities.',
+     gen:'Civil Rights Law 79-l requires written consent for genetic testing and disclosure.',
+     repro:'Shield law protects reproductive and gender-affirming care information.',
+     minors:'Child Data Protection Act (in force June 2025) limits processing data of users under 18 without consent.'},
+  pend:['New York Health Information Privacy Act (S9269/A10357) passed both houses in June 2026 and is awaiting the Governor\'s action. An earlier version was vetoed on December 19, 2025. If signed, it would cover health information well beyond HIPAA, require authorization for most processing, and take effect six months later.']},
+NC:{n:'North Carolina',
+  s:{mh:'G.S. 122C-52 makes mental health, developmental disability, and SUD records confidential.',hiv:'G.S. 130A-143 restricts disclosure of communicable disease information, including HIV.'}},
+ND:{n:'North Dakota'},
+OH:{n:'Ohio'},
+OK:{n:'Oklahoma',
+  cp:{law:'Oklahoma Data Privacy Act (SB 546)',eff:'2027-01-01',st:'enacted',hx:'both',sens:'opt-in',note:'Applies to businesses processing data of 100,000 or more consumers, or 25,000 or more while earning over half their revenue from selling data. Attorney General enforcement with a cure period.'}},
+OR:{n:'Oregon',
+  cp:{law:'Oregon Consumer Privacy Act',eff:'2024-07-01',st:'effect',hx:'data',sens:'opt-in',note:'PHI is exempt, but covered entities are not exempt as entities, and nonprofits are covered since July 2025. A 2025 amendment bans selling precise geolocation and data of known minors under 16.'},
+  ai:[{c:'clinical',law:'HB 2748 (2025)',eff:'2026-01-01',t:'AI and other nonhuman entities may not use nursing titles such as RN or NP.'},
+      {c:'chatbot',law:'2026 chatbot law',eff:'2027-01-01',t:'Minor safeguards and crisis detection for AI chatbots.'}],
+  s:{repro:'Shield law protects reproductive and gender-affirming care information.',gen:'Oregon Genetic Privacy Act limits use and disclosure of genetic information.',loc:'Selling precise geolocation data is banned.'}},
+PA:{n:'Pennsylvania',
+  s:{mh:'Pennsylvania mental health law restricts disclosure of mental health treatment records.',sud:'Pennsylvania has its own SUD confidentiality rules, which were aligned more closely with HIPAA in 2020.'}},
+RI:{n:'Rhode Island',
+  cp:{law:'Rhode Island Data Transparency and Privacy Protection Act',eff:'2026-01-01',st:'effect',hx:'entity',sens:'opt-in',note:'HIPAA covered entities are exempt as entities.'},
+  med:{law:'Confidentiality of Health Care Communications and Information Act (R.I. Gen. Laws 5-37.3)',t:'Requires patient consent for most disclosures of confidential health care information, with stricter limits than HIPAA.'},
+  ai:[{c:'mh',law:'2026 psychotherapy AI law',eff:'2026-06-22',t:'Written disclosure and consent before psychotherapy providers use AI companions or emotional-attachment tools.'},
+      {c:'clinical',law:'2026 AI documentation notice law',eff:'2026-06-22',t:'Providers must tell patients when AI records or documents a visit.'},
+      {c:'chatbot',law:'2026 chatbot law',eff:'2027-01-01',t:'Crisis detection and response for AI chatbots.'}],
+  s:{repro:'Shield law protects reproductive and gender-affirming care information.'}},
+SC:{n:'South Carolina'},
+SD:{n:'South Dakota'},
+TN:{n:'Tennessee',
+  cp:{law:'Tennessee Information Protection Act',eff:'2025-07-01',st:'effect',hx:'entity',sens:'opt-in',note:'Applies only to businesses with over $25 million in revenue that also meet data volume tests. HIPAA covered entities are exempt as entities.'},
+  ai:[{c:'mh',law:'SB 1580 and HB 1470 (2026)',eff:'2026-07-01',t:'AI may not be advertised or presented as a qualified mental health professional ($5,000 per violation) and may not provide therapy without licensed oversight.'}],
+  s:{gen:'Tennessee Genetic Information Privacy Act (2023) covers direct-to-consumer genetic testing companies.'}},
+TX:{n:'Texas',
+  cp:{law:'Texas Data Privacy and Security Act',eff:'2024-07-01',st:'effect',hx:'entity',sens:'opt-in',note:'Applies to any business that is not a small business, with no headcount threshold. HIPAA covered entities are exempt as entities. Attorney General enforcement.'},
+  med:{law:'Texas Medical Records Privacy Act (Health and Safety Code ch. 181, HB 300)',beyond:true,t:'Uses HIPAA\'s definition of PHI but applies it to anyone who assembles, stores, transmits, or comes into possession of PHI, including business associates, IT firms, schools, researchers, and website operators. Bans sale of PHI, requires employee training, and requires notice before electronic disclosure.'},
+  ai:[{c:'clinical',law:'HB 149, Texas Responsible AI Governance Act (TRAIGA)',eff:'2026-01-01',t:'Health care providers must give patients conspicuous written disclosure of AI use in diagnosis or treatment, before or at the time of the interaction.'},
+      {c:'clinical',law:'SB 1188',eff:'2025-09-01',t:'Practitioners may use AI for diagnosis and treatment within their license if they review all AI-generated content before a clinical decision and disclose AI use. Electronic health records must be stored in the U.S. starting January 1, 2026.'},
+      {c:'payer',law:'SB 815 (2025)',eff:'2025-09-01',t:'Utilization review agents may not use automated decision systems to make adverse determinations, in whole or part.'}],
+  s:{bio:'Capture or Use of Biometric Identifier Act (Bus. and Com. Code 503.001) requires notice and consent. The Attorney General has won large settlements.',
+     minors:'SCOPE Act sets duties for digital services used by minors (parts are enjoined).'}},
+UT:{n:'Utah',
+  cp:{law:'Utah Consumer Privacy Act',eff:'2023-12-31',st:'effect',hx:'entity',sens:'opt-out',note:'Sensitive data needs notice and a chance to opt out, not opt-in consent. Applies only to businesses with over $25 million in revenue that also meet data volume tests.'},
+  ai:[{c:'chatbot',law:'HB 452, mental health chatbots',eff:'2025-05-07',t:'Mental health chatbots must disclose they are AI and may not sell or share a user\'s identifiable health information or chat input with third parties, with narrow exceptions. Ads must be disclosed.'},
+      {c:'clinical',law:'AI Policy Act, as narrowed by SB 226',eff:'2025-05-07',t:'Regulated occupations, including physicians, must prominently disclose generative AI use in "high-risk" interactions that collect health information and give personalized advice.'},
+      {c:'gov',law:'AI Learning Laboratory (regulatory sandbox)',eff:'2024-05-01',t:'State sandbox that allows pilots under agreed safeguards, including autonomous prescription refill pilots.'},
+      {c:'payer',law:'2026 utilization review law',eff:'2027-01-01',t:'Payers must disclose AI use in utilization review to enrollees.'}],
+  s:{gen:'Utah Genetic Information Privacy Act (2021) covers direct-to-consumer genetic testing companies.'}},
+VT:{n:'Vermont',
+  cp:{law:'Vermont Data Privacy and Online Surveillance Act (S.71, 2026)',eff:'2028-01-01',st:'enacted',hx:'both',sens:'opt-in',note:'Signed June 16, 2026. Low thresholds (35,000 residents, or sensitive data of 3,000). Separate consumer health data rules apply to any business with no threshold, including extra consent to sell health data and a geofencing ban near health care facilities.'},
+  med:{law:'18 V.S.A. 1881',t:'Covered entities may not disclose PHI unless HIPAA would allow it, which makes HIPAA violations enforceable under state law.'},
+  ai:[{c:'mh',law:'H 816 (2026)',eff:'2026-06-17',t:'HIPAA-compliant AI is allowed under professional review, but no entity may offer AI mental health services without a licensed professional.'}],
+  s:{repro:'Shield law protects reproductive and gender-affirming care information (2023).',minors:'Vermont Age-Appropriate Design Code Act applies to online services likely accessed by minors.'}},
+VA:{n:'Virginia',
+  cp:{law:'Virginia Consumer Data Protection Act',eff:'2023-01-01',st:'effect',hx:'entity',sens:'opt-in',note:'HIPAA covered entities and business associates are exempt as entities. A 2026 amendment bans selling precise geolocation data.'},
+  med:{law:'Health Records Privacy Act (Va. Code 32.1-127.1:03)',t:'Gives patients a right of privacy in their records and limits disclosures by providers.'},
+  s:{repro:'Since 2024, obtaining or sharing reproductive or sexual health information without consent is a violation of the Virginia Consumer Protection Act, which lets individuals sue. Virginia added shield protections in 2026.',loc:'Selling precise geolocation data is banned from July 1, 2026.'}},
+WA:{n:'Washington',
+  chd:{law:'My Health My Data Act (RCW 19.373)',eff:'2024-03-31',t:'The broadest health-specific privacy law in the country. No revenue or volume threshold, and nonprofits are covered. Covers health status inferred from non-health data such as purchases and location. Requires separate consent to collect and to share, and signed authorization to sell. Bars geofencing within 2,000 feet of health care facilities. Consumers can sue under the Consumer Protection Act. HIPAA PHI and de-identified data are exempt.'},
+  med:{law:'Uniform Health Care Information Act (RCW 70.02)',t:'Governs disclosure of health care information by providers, with stricter rules for mental health and sexually transmitted infection records.'},
+  ai:[{c:'chatbot',law:'2026 chatbot law',eff:'2027-01-01',t:'Minor safeguards and crisis detection for AI chatbots.'}],
+  s:{bio:'Biometric identifier law (RCW 19.375) requires notice and consent for commercial enrollment. Biometric data is also consumer health data under My Health My Data.',
+     repro:'Shield law protects reproductive and gender-affirming care information (2023).',
+     loc:'Geofencing within 2,000 feet of health care facilities is barred.'}},
+WV:{n:'West Virginia'},
+WI:{n:'Wisconsin',
+  med:{law:'Wis. Stat. 146.82 and 51.30',t:'Patient health care records are confidential, with stricter rules for mental health and SUD treatment records.'}},
+WY:{n:'Wyoming',
+  s:{mh:'Wyoming sets stricter confidentiality for certain mental health records.'}}
+};
+
+/* Default notes by data type when no state-specific note exists */
+const DEF = {
+  mh: 'Every state has confidentiality rules for licensed mental health professionals and facilities. Psychotherapy notes have extra protection under HIPAA. Check the state licensing board rules.',
+  sud: 'Part 2 applies to federally assisted programs. Check whether state licensing rules add consent requirements.',
+  repro: 'The 2024 HIPAA reproductive health rule was vacated in June 2025, so federal protection is back to baseline HIPAA. Check for a state shield law.',
+  hiv: 'Nearly every state has an HIV or communicable disease confidentiality law stricter than HIPAA.',
+  gen: 'GINA covers only health insurers and employers. More than a dozen states have genetic privacy laws for testing companies; check this state\'s code.',
+  bio: 'No federal biometric privacy law. Where a comprehensive privacy law exists, biometric data is usually "sensitive."',
+  minors: 'COPPA covers children under 13 online. Many states also give minors\' data extra protection.',
+  loc: 'Location history can reveal care (a visit to a clinic). Federal law does not treat it as health data on its own; the FTC has acted against sellers of sensitive location data.',
+  neural: 'No federal neural data law. Colorado, California, Montana, and Connecticut treat neural data as sensitive.'
+};
+
+const SOURCES = [
+  ['Alliance for Health Policy, "Health Data Privacy in the AI Era" Capitol Hill briefing (Oct 2026), panel transcript', null],
+  ['T. Eto, "When Washington Stepped Back, States Stepped Up!" TechInHSR (May 22, 2026)', 'https://techinhsr.substack.com/p/when-washington-stepped-back-states'],
+  ['T. Eto, "Colorado\'s AI Law and What It Means for Research Compliance" (May 25, 2026)', 'https://techinhsr.substack.com/p/colorados-ai-law-and-what-it-means'],
+  ['T. Eto, "California\'s AI Laws and What It Means" (June 2, 2026)', 'https://techinhsr.substack.com/p/californias-ai-laws-and-what-it-means'],
+  ['T. Eto, "Connecticut\'s AI Law Is the Most Relevant"', 'https://techinhsr.substack.com/p/connecticuts-ai-law-is-the-most-relevant'],
+  ['Manatt Health, Q2 and Q3 2026 Health AI Policy Tracker', 'https://www.manatt.com/insights/white-papers/2026/q3-health-ai-tracker-federal-agencies-california-and-utah-s-sandbox-take-center-stage'],
+  ['Holland & Knight, "Keeping Humans in the Loop: California Sets New Ground Rules for AI in Healthcare" (Oct 2026)', 'https://www.hklaw.com/en/insights/publications/2026/10/keeping-humans-in-the-loop-california-sets-new-ground-rules'],
+  ['Snell & Wilmer, Colorado AI health care update (2026)', 'https://www.swlaw.com/publication/update-colorados-three-front-ai-healthcare-landscape-has-shifted-what-changed-and-what-it-means/'],
+  ['Privacy World, "Adding to the Count: The latest in state consumer privacy laws" (Aug 2026)', 'https://www.privacyworld.blog/2026/08/adding-to-the-count-the-latest-in-state-consumer-privacy-laws/'],
+  ['Koley Jessen, Vermont Data Privacy and Online Surveillance Act', 'https://www.koleyjessen.com/insights/publications/vermont-becomes-24th-state-to-enact-comprehensive-consumer-privacy-law'],
+  ['NYC Bar, Support for revised NY Health Information Privacy Act (2026)', 'https://www.nycbar.org/reports/support-revised-ny-health-information-privacy-act-2026/'],
+  ['Foley & Lardner, State Comprehensive Consumer Privacy Law Comparison Chart', 'https://foley.com/wp-content/uploads/2024/12/U.S.-State-Comprehensive-Consumer-Privacy-Law-Comparison-Chart_V5.pdf'],
+  ['AMA, State legislative activity: AI in health care (Nov 2025)', 'https://www.ama-assn.org/system/files/issue-brief-state-legislative-update-ai-health-care.pdf'],
+  ['HHS regulatory status summary, HIPAA rules 2026', 'https://www.curvecompliance.com/new-hipaa-rule-2026']
+];
+
+</script>
+<script>
+(function(){
+const GRID = {AK:[0,0],ME:[0,11],WI:[1,6],VT:[1,10],NH:[1,11],WA:[2,1],ID:[2,2],MT:[2,3],ND:[2,4],MN:[2,5],IL:[2,6],MI:[2,7],NY:[2,9],MA:[2,10],
+  OR:[3,1],NV:[3,2],WY:[3,3],SD:[3,4],IA:[3,5],IN:[3,6],OH:[3,7],PA:[3,8],NJ:[3,9],CT:[3,10],RI:[3,11],
+  CA:[4,1],UT:[4,2],CO:[4,3],NE:[4,4],MO:[4,5],KY:[4,6],WV:[4,7],VA:[4,8],MD:[4,9],DE:[4,10],
+  AZ:[5,2],NM:[5,3],KS:[5,4],AR:[5,5],TN:[5,6],NC:[5,7],SC:[5,8],DC:[5,9],OK:[6,4],LA:[6,5],MS:[6,6],AL:[6,7],GA:[6,8],HI:[7,0],TX:[7,4],FL:[7,9]};
+const TIERS = {
+  broad:{l:'Health-specific reach beyond HIPAA',s:'Broad'},
+  comp:{l:'Consumer privacy law in effect',s:'Partial'},
+  soon:{l:'New law enacted or passed, not yet in effect',s:'Coming'},
+  base:{l:'HIPAA, FTC, and general state law only',s:'Baseline'}
+};
+const PILL = {yes:['p-yes','Applies'],dep:['p-dep','Depends'],no:['p-no','Does not apply'],soon:['p-soon','Not yet in effect']};
+const CATS = {clinical:'AI in clinical care',payer:'Payer and utilization review',chatbot:'Chatbots and companions',mh:'AI in mental health care',gov:'AI governance and transparency'};
+const REL = {ce:['clinical','payer','mh','gov'],ba:['clinical','payer','mh','gov'],dtc:['clinical','mh','chatbot','gov'],app:['chatbot','mh','gov'],pt:['chatbot','mh']};
+const HX = {entity:'Exempts covered entities as entities',data:'Exempts PHI only (data-level)',both:'Exempts covered entities and PHI'};
+const codes = Object.keys(ST).sort((a,b)=>ST[a].n.localeCompare(ST[b].n));
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmt(d){ if(!d) return ''; if(/^\d{4}$/.test(d)) return d; const [y,m,dd]=d.split('-').map(Number); return MONTHS[m-1]+' '+dd+', '+y; }
+function live(d){ if(!d) return true; if(/^\d{4}$/.test(d)) return Number(d) < 2027; return d <= AS_OF; }
+function effLabel(d){ if(!d) return ''; if(/^\d{4}$/.test(d)) return d+' law'; return (live(d)?'In effect ':'Starts ')+fmt(d); }
+
+function tier(c){
+  const s=ST[c];
+  if((s.chd && live(s.chd.eff)) || (s.med && s.med.beyond)) return 'broad';
+  if(s.cp && s.cp.st!=='enacted' && live(s.cp.eff)) return 'comp';
+  if((s.cp && !live(s.cp.eff)) || c==='NY') return 'soon';
+  return 'base';
+}
+
+/* state and persistence */
+const st = {code:'TX', sc:'dtc', dt:new Set(['mh'])};
+try{ const saved=JSON.parse(localStorage.getItem('hpn-state')||'null'); if(saved && ST[saved.code] && SCEN[saved.sc]){st.code=saved.code;st.sc=saved.sc;st.dt=new Set((saved.dt||[]).filter(k=>DTYPES[k]));} }catch(e){}
+function save(){ try{ localStorage.setItem('hpn-state',JSON.stringify({code:st.code,sc:st.sc,dt:[...st.dt]})); }catch(e){} }
+
+/* build controls */
+const map=document.getElementById('map');
+Object.entries(GRID).forEach(([c,[r,col]])=>{
+  const b=document.createElement('button'); b.type='button'; b.textContent=c; b.className='tier-'+tier(c);
+  b.style.gridRow=(r+1); b.style.gridColumn=(col+1); b.title=ST[c].n+': '+TIERS[tier(c)].l; b.dataset.code=c;
+  b.setAttribute('aria-label',ST[c].n); b.onclick=()=>{st.code=c;update();}; map.appendChild(b);
+});
+document.getElementById('legend').innerHTML=Object.entries(TIERS).map(([k,v])=>`<span><i class="tier-${k}"></i>${v.l}</span>`).join('');
+const sel=document.getElementById('stateSel');
+sel.innerHTML=codes.map(c=>`<option value="${c}">${esc(ST[c].n)}</option>`).join('');
+sel.onchange=()=>{st.code=sel.value;update();};
+document.getElementById('holders').innerHTML=Object.entries(SCEN).map(([k,v])=>`<label><input type="radio" name="holder" id="h-${k}" value="${k}"><span><b>${esc(v.t)}</b><small>${esc(v.s)}</small></span></label>`).join('');
+document.querySelectorAll('input[name=holder]').forEach(i=>i.onchange=()=>{st.sc=i.value;update();});
+const chips=document.getElementById('chips');
+chips.innerHTML=Object.entries(DTYPES).map(([k,v])=>`<button type="button" data-dt="${k}">${esc(v)}</button>`).join('');
+chips.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=b.dataset.dt; st.dt.has(k)?st.dt.delete(k):st.dt.add(k); update();});
+
+/* rule builders */
+function ruleHTML(r){
+  const p=PILL[r.st]; return `<div class="rule${r.st==='no'?' dim':''}"><span class="pill ${p[0]}">${r.pill||p[1]}</span><div><h4>${esc(r.name)}${r.tag?`<span class="tag">${esc(r.tag)}</span>`:''}</h4>${r.cite?`<div class="cite">${esc(r.cite)}</div>`:''}<p>${esc(r.why)}</p></div></div>`;
+}
+function fedRules(sc){
+  return FED.filter(f=>!f.sens || st.dt.has(f.sens) || f.st[sc]==='yes').map(f=>({name:f.name,cite:f.cite,st:f.st[sc],why:typeof f.why==='string'?f.why:f.why[sc]}))
+    .sort((a,b)=>'yes dep no'.indexOf(a.st)-'yes dep no'.indexOf(b.st));
+}
+function stateRules(c,sc){
+  const s=ST[c], out=[];
+  // medical confidentiality
+  if(s.med){
+    const m=s.med; let r;
+    if(sc==='ce'||sc==='dtc') r='yes';
+    else if(sc==='ba') r=(c==='TX')?'yes':'dep';
+    else r=m.beyond?(sc==='pt'&&c==='CA'?'dep':(c==='TX'||c==='CA'?'dep':'no')):'no';
+    let why=m.t;
+    if(sc==='ba'&&c!=='TX') why+=' Vendors are usually bound through their contracts with providers.';
+    if(sc==='dtc') why+=' State medical records and licensing rules bind licensed providers whether or not they bill insurance.';
+    if((sc==='app'||sc==='pt')&&!m.beyond) why='Applies to licensed providers and facilities, not to consumer apps or AI companies.';
+    if(c==='CA'&&(sc==='app'||sc==='pt')) why='The CMIA covers businesses offering apps or software designed to maintain medical information, and from January 1, 2027, businesses offering consumer health care chatbots. A general-purpose chatbot may not qualify.';
+    if(c==='TX'&&(sc==='app'||sc==='pt')) why='Texas applies its medical privacy law to anyone who comes into possession of PHI, which can include app and website operators. Whether data a patient chose to upload is still "PHI" in the company\'s hands is an open question.';
+    out.push({name:m.law,st:r,why});
+  } else {
+    out.push({name:'General medical records and professional confidentiality rules',st:(sc==='ce'||sc==='dtc')?'yes':(sc==='ba'?'dep':'no'),why:(sc==='app'||sc==='pt')?'These bind licensed providers and facilities, not consumer apps or AI companies.':ST[c].n+' has medical records and licensing confidentiality rules for providers. They largely track HIPAA but apply to licensed providers whether or not they bill insurance.'});
+  }
+  // consumer health data law
+  if(s.chd){
+    const ch=s.chd; let r, why=ch.t;
+    if(sc==='ce') r=(c==='WA')?'dep':'no';
+    else if(sc==='ba') r='dep';
+    else r='yes';
+    if(sc==='ce'&&c!=='WA') why='HIPAA covered entities are exempt. '+ch.t;
+    if(sc==='ce'&&c==='WA') why='PHI is exempt, but health data you collect outside HIPAA, such as website or app data from non-patients, can be covered. '+ch.t;
+    out.push({name:ch.law,st:live(ch.eff)?r:'soon',why,tag:effLabel(ch.eff)});
+  }
+  // comprehensive
+  if(s.cp){
+    const p=s.cp; let r, lead='';
+    if(sc==='ce'){ r=(p.hx==='data')?'dep':'no'; lead=(p.hx==='data')?'PHI is exempt, but other personal data you hold, such as website visitors, marketing lists, or app users outside HIPAA, can be covered. ':'HIPAA covered entities are exempt as entities. '; }
+    else if(sc==='ba'){ r='dep'; lead=(p.hx==='data')?'PHI you handle for a covered entity is exempt; your other personal data can be covered. ':'Check whether this law exempts business associates as entities or only the PHI they hold. '; }
+    else { r='dep'; lead='Applies if the business meets the law\'s size thresholds. '+(p.sens==='opt-in'?'Health data is sensitive and needs opt-in consent. ':'Health data is sensitive, but this law relies on notice and opt-out, or a right to limit, rather than opt-in consent. '); }
+    if(!live(p.eff)) r='soon';
+    out.push({name:p.law,st:r,why:lead+p.note,tag:effLabel(p.eff)});
+  } else if(sc!=='ce'&&sc!=='ba'){
+    out.push({name:'No comprehensive consumer privacy law',st:'no',why:'Outside HIPAA, protection depends on the company\'s own privacy policy, FTC enforcement, and '+ST[c].n+'\'s general consumer protection law.'});
+  }
+  out.push({name:'State data breach notification law',st:'yes',why:'Every state and DC has one. Many include medical or health insurance information. Re-identification through AI linkage usually does not count as a "breach" under these laws.'});
+  return out;
+}
+function aiRules(c,sc){
+  const list=(ST[c].ai||[]); const rel=REL[sc];
+  const main=list.filter(a=>rel.includes(a.c)), other=list.filter(a=>!rel.includes(a.c));
+  const toRule=a=>({name:a.law,st:live(a.eff)?'yes':'soon',pill:live(a.eff)?CATS[a.c]:'Not yet in effect',why:a.t,tag:effLabel(a.eff)});
+  return {main:main.map(toRule),other:other.map(a=>({...toRule(a),st:'no',pill:CATS[a.c]}))};
+}
+function sensCards(c){
+  const s=ST[c].s||{}, out=[];
+  [...st.dt].forEach(k=>{
+    let a = s[k];
+    if(!a && k==='repro' && SHIELD.includes(c)) a = ST[c].n+' has a shield law that limits sharing reproductive health care information with out-of-state investigations.';
+    const fed = (k==='sud')?'Federal: 42 CFR Part 2 applies to federally assisted programs and those who receive their records.':
+      (k==='gen')?'Federal: GINA covers only health insurers and employers.':
+      (k==='minors')?'Federal: COPPA requires parental consent for children under 13 online.':
+      (k==='repro')?'Federal: the 2024 HIPAA reproductive health rule was vacated in June 2025.':'';
+    const cpNote = ST[c].cp ? ('Sensitive data under '+ST[c].cp.law.replace(/ \(.*\)$/,'')+(live(ST[c].cp.eff)?'.':' once it takes effect.')) : '';
+    const body = a || DEF[k];
+    out.push(`<div><h4>${esc(DTYPES[k])}</h4><p>${esc(body)}</p>${(fed||(cpNote&&k!=='minors'))?`<p>${esc([fed, k!=='minors'?cpNote:''].filter(Boolean).join(' '))}</p>`:''}</div>`);
+  });
+  return out.join('');
+}
+function gaps(c,sc){
+  const s=ST[c], t=tier(c), g=[];
+  if(sc==='ce'){
+    g.push('HIPAA allows treatment, payment, and operations uses without asking the patient, which covers many AI uses, including quality improvement and some model development.');
+    g.push('Staff using unapproved AI tools ("ghost AI") move PHI outside HIPAA controls. Without a business associate agreement, that is a potential breach.');
+    g.push('Once data is de-identified, HIPAA no longer applies, and no federal rule stops a recipient from re-identifying it.');
+    if(s.cp && s.cp.hx!=='data') g.push(s.cp.law+' exempts you as an entity, so for most of your data the state consumer privacy law adds little.');
+    g.push('Patients often cannot see clinical decision support outputs that run in the background, because they may not be part of the designated record set.');
+  }
+  if(sc==='ba'){
+    g.push('Your duties come mostly from the business associate agreement. Training or improving models with PHI must fit a permitted purpose the covered entity has allowed.');
+    g.push('Agentic AI that holds credentials across systems can reach more PHI than the minimum necessary. Workflows are hard to predict, so access limits matter.');
+    g.push('De-identified data you receive or create leaves HIPAA. State definitions of de-identified data may differ.');
+  }
+  if(sc==='dtc'){
+    g.push('If the practice never bills insurance electronically, HIPAA likely does not apply, and some companies are built around that.');
+    g.push('State medical records and licensing rules still bind licensed clinicians, but they may not cover the platform company that runs the app.');
+    if(t==='base') g.push(s.n+' has no comprehensive or health-specific privacy law, so the platform\'s privacy policy and the FTC are the main protection.');
+  }
+  if(sc==='app'){
+    g.push('No HIPAA. The company can do what its privacy policy discloses, and few people read those policies.');
+    if(t==='base') g.push(s.n+' has no comprehensive or health-specific privacy law. Outside the FTC, the privacy policy is the main protection.');
+    if(t==='comp') g.push('The consumer privacy law applies only if the company meets size thresholds, and most exempt nonprofits and smaller businesses.');
+    if(t==='soon' && s.cp) g.push(s.cp.law+' is not in effect until '+fmt(s.cp.eff)+'.');
+    g.push('Inferences count. Purchases, searches, and location near a clinic can reveal health status, but only a few states treat inferred data as health data.');
+  }
+  if(sc==='pt'){
+    g.push('HIPAA protection ends when the patient takes the copy. What happens next depends on the AI company\'s terms.');
+    g.push('Many consumer AI tools use chats for training unless the user opts out. Large language models can memorize training data.');
+    g.push('Patients facing urgent decisions often share sensitive data because they have no other option. Consent under that pressure is not much of a choice.');
+    if(t==='base') g.push(s.n+' has no consumer privacy or health data law that would give the patient deletion or access rights against the AI company.');
+  }
+  return g;
+}
+function bottomLine(c,sc){
+  const s=ST[c], t=tier(c), n=s.n;
+  const cp=s.cp, chd=s.chd, med=s.med;
+  if(sc==='ce') return `<p>HIPAA is the main rule. ${med?esc(n)+' adds '+esc(med.law)+'. ':''}${cp&&cp.hx==='data'?'The state consumer privacy law can still reach personal data you hold outside PHI. ':''}${(s.ai||[]).some(a=>['clinical','payer','mh'].includes(a.c))?'This state also has AI-specific duties for providers or plans, listed below.':'This state has no AI-specific duties for providers or plans in this tool.'}</p>`;
+  if(sc==='ba') return `<p>HIPAA applies through your business associate agreement, and you are directly liable for Security Rule duties. ${c==='TX'?'Texas also applies its medical privacy law to you directly. ':''}Watch the state AI laws below, since vendors often carry the design and disclosure duties in practice.</p>`;
+  if(sc==='dtc') return `<p>HIPAA likely does not apply to a cash-only practice. ${med&&med.beyond?esc(n)+'\'s medical privacy law fills much of that gap. ':'State licensing and medical records rules still bind the clinicians. '}${chd?esc(chd.law)+' covers consumer health data the platform collects. ':''}${cp&&!chd?esc(cp.law)+(live(cp.eff)?' applies if the business meets its thresholds.':' starts '+fmt(cp.eff)+'.'):''}</p>`;
+  if(sc==='app'){
+    if(chd) return `<p>${esc(n)} is one of the few states with a health-specific privacy law outside HIPAA: ${esc(chd.law)}. Consent is required to collect and share consumer health data.</p>`;
+    if(med&&med.beyond) return `<p>No HIPAA, but ${esc(n)}'s medical privacy law can reach companies outside the traditional health care system. ${cp?esc(cp.law)+' also treats health data as sensitive.':''}</p>`;
+    if(cp&&live(cp.eff)) return `<p>No HIPAA and no health-specific law. ${esc(cp.law)} treats health data as sensitive (${cp.sens==='opt-in'?'opt-in consent':'notice and opt-out'}), if the company meets its size thresholds.</p>`;
+    if(cp) return `<p>No HIPAA. ${esc(cp.law)} will treat health data as sensitive starting ${fmt(cp.eff)}. Until then, the FTC and the company's privacy policy are the main protection.</p>`;
+    return `<p>No HIPAA and no comprehensive or health-specific state privacy law. The company's privacy policy, enforced by the FTC, is the main protection.</p>`;
+  }
+  if(sc==='pt') return `<p>Once a patient downloads records and uploads them to an AI tool, HIPAA no longer protects that copy. ${chd?esc(chd.law)+' covers the AI company if the upload is consumer health data. ':''}${c==='CA'?'From January 1, 2027, California treats consumer health care chatbots as providers under the CMIA. ':''}${!chd&&cp&&live(cp.eff)?esc(cp.law)+' may apply to the AI company if it meets the thresholds. ':''}${t==='base'?'In '+esc(n)+', the AI company\'s terms and the FTC are the main protection.':''}</p>`;
+}
+
+function render(){
+  const c=st.code, sc=st.sc, s=ST[c], t=tier(c);
+  const f=fedRules(sc), sr=stateRules(c,sc), ai=aiRules(c,sc);
+  const hip=FED[0].st[sc];
+  const v=[
+    ['HIPAA', hip==='yes'?'Applies':'Does not apply'],
+    ['Consumer privacy law', s.cp?(live(s.cp.eff)?(s.cp.st==='narrow'?'Narrow law':'In effect'):'Starts '+fmt(s.cp.eff)):'None'],
+    ['Health-specific law', s.chd?'Yes':(s.med&&s.med.beyond?'Medical law reaches beyond HIPAA':'No')],
+    ['Health AI laws here', String((s.ai||[]).length)]
+  ];
+  const pend=(s.pend||[]);
+  document.getElementById('results').innerHTML=`
+    <div class="rhead">
+      <div class="eyebrow">${esc(TIERS[t].s)} protection outside HIPAA</div>
+      <h2>${esc(s.n)}</h2>
+      <div class="who">${esc(SCEN[sc].t)}${st.dt.size?' · '+[...st.dt].map(k=>DTYPES[k]).join(', '):''}</div>
+    </div>
+    <div class="verdicts">${v.map(([k,val])=>`<div class="v"><span class="k">${k}</span><span class="val">${esc(val)}</span></div>`).join('')}</div>
+    <div class="bottom">${bottomLine(c,sc)}</div>
+    ${pend.length?`<div class="pend"><p><strong>Watch:</strong></p>${pend.map(p=>`<p>${esc(p)}</p>`).join('')}</div>`:''}
+    <section class="layer"><header><h3>Federal floor</h3><p>Same in every state</p></header>${f.map(ruleHTML).join('')}</section>
+    <section class="layer"><header><h3>${esc(s.n)} privacy law</h3><p>States can add protections on top of HIPAA</p></header>${sr.map(ruleHTML).join('')}</section>
+    <section class="layer"><header><h3>AI-specific rules</h3><p>Relevant to ${esc(SCEN[sc].t.toLowerCase())}</p></header>
+      ${ai.main.length?ai.main.map(ruleHTML).join(''):`<p class="note">No AI-specific health laws in ${esc(s.n)} that apply to this holder are listed in this tool. General AI laws may still apply.</p>`}
+      ${ai.other.length?`<details class="more"><summary>Other AI laws in ${esc(s.n)} (${ai.other.length})</summary>${ai.other.map(ruleHTML).join('')}</details>`:''}
+    </section>
+    ${st.dt.size?`<section class="layer"><header><h3>Sensitive data</h3><p>Rules stricter than HIPAA often apply</p></header><div class="sens">${sensCards(c)}</div></section>`:''}
+    <section class="layer"><header><h3>Gaps to watch</h3><p>Where protection runs thin</p></header><ul class="gaps">${gaps(c,sc).map(g=>`<li>${esc(g)}</li>`).join('')}</ul></section>
+    <p class="note">Summary for education. Thresholds, exemptions, and effective dates have details this tool does not show. Check the primary law before acting.</p>`;
+}
+function update(){
+  map.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.code===st.code));
+  sel.value=st.code;
+  document.getElementById('h-'+st.sc).checked=true;
+  chips.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',st.dt.has(b.dataset.dt)));
+  render(); save();
+}
+
+/* compare */
+const FILT={all:'All',broad:'Health-specific reach',comp:'Consumer privacy law',soon:'Coming',base:'Baseline only'};
+let cf='all';
+const cfEl=document.getElementById('cmpFilters');
+cfEl.innerHTML=Object.entries(FILT).map(([k,v])=>`<button type="button" data-f="${k}">${v}</button>`).join('');
+cfEl.querySelectorAll('button').forEach(b=>b.onclick=()=>{cf=b.dataset.f;renderCmp();});
+document.getElementById('cmpSearch').oninput=renderCmp;
+function renderCmp(){
+  cfEl.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.f===cf));
+  const q=document.getElementById('cmpSearch').value.trim().toLowerCase();
+  document.getElementById('cmpBody').innerHTML=codes.filter(c=>(cf==='all'||tier(c)===cf)&&(!q||ST[c].n.toLowerCase().includes(q)||c.toLowerCase()===q)).map(c=>{
+    const s=ST[c],t=tier(c),p=s.cp;
+    const hs=[s.chd?s.chd.law:'',s.med&&s.med.beyond?s.med.law:''].filter(Boolean).join('; ')||'None';
+    return `<tr data-code="${c}" tabindex="0"><td><strong>${esc(s.n)}</strong></td><td><span class="sw tier-${t}"></span>${TIERS[t].s}</td>
+      <td>${p?esc(p.law)+'<br><span class="note">'+esc(effLabel(p.eff))+'</span>':'None'}</td>
+      <td>${p?(p.sens==='opt-in'?'Opt-in':'Opt-out or right to limit'):'n/a'}</td>
+      <td>${p?HX[p.hx]:'n/a'}</td><td>${esc(hs)}</td><td class="num">${(s.ai||[]).length}</td></tr>`;}).join('');
+  document.querySelectorAll('#cmpBody tr').forEach(tr=>{const go=()=>{st.code=tr.dataset.code;location.hash='lookup';update();}; tr.onclick=go; tr.onkeydown=e=>{if(e.key==='Enter')go();};});
+}
+
+/* concepts + footer */
+document.getElementById('fedTimeline').innerHTML=FED_CHANGES.map(x=>`<li><time datetime="${x.d}">${fmt(x.d)}</time><span>${esc(x.t)}</span></li>`).join('');
+document.getElementById('srcList').innerHTML=SOURCES.map(([t,u])=>`<li>${u?`<a href="${u}" target="_blank" rel="noopener">${esc(t)}</a>`:esc(t)}</li>`).join('');
+
+/* tabs */
+function route(){
+  const h=(location.hash||'#lookup').slice(1); const tab=['lookup','compare','concepts'].includes(h)?h:'lookup';
+  ['lookup','compare','concepts'].forEach(k=>document.getElementById('view-'+k).hidden=(k!==tab));
+  document.querySelectorAll('nav.tabs a').forEach(a=>{ if(a.dataset.tab===tab) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+}
+window.addEventListener('hashchange',route);
+route(); renderCmp(); update();
+})();
+</script>
+
+</html>
